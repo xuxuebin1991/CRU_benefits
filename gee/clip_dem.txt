@@ -1,0 +1,22 @@
+var dem = ee.Image("USGS/SRTMGL1_003")
+var china = ee.FeatureCollection('projects/cru-xuxuebin/assets/china')
+
+
+//products
+var products = ee.Terrain.products(dem)
+
+Map.addLayer(products, {}, 'products')
+
+products = products.toInt16()
+
+print(products)
+
+Export.image.toDrive({
+  image: products,
+  description: 'DEM_world',
+  crs: "EPSG:4326",
+  scale: 9250,
+  //region: china,
+  maxPixels: 1e13,
+  folder: 'DEM_world'
+});

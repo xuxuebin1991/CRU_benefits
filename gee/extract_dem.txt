@@ -1,0 +1,30 @@
+
+var location = ee.FeatureCollection('projects/cru-xuxuebin/assets/data_coordinate')
+var date = ee.FeatureCollection('projects/cru-xuxuebin/assets/data_coordinate_date_')
+//var era5 = ee.ImageCollection("ECMWF/ERA5/MONTHLY")
+var dem = ee.Image("USGS/SRTMGL1_003")
+//ee.Image("NASA/NASADEM_HGT/001")
+//ee.Image("USGS/GMTED2010")
+
+//Map.addLayer(dem,{} ,'DEM')
+
+var pts = location
+
+//products
+var products = ee.Terrain.products(dem)
+print(products)
+
+var dem_extract = products.sampleRegions({
+  collection:pts,
+  //properties:ee.List(['No']), //默认输入的全选 
+  scale:1
+});
+
+print(dem_extract)
+
+Export.table.toDrive({
+  collection: dem_extract,
+  folder:'CRU_meta-analysis',
+  description: 'dem',
+  fileFormat: 'CSV'
+}); 

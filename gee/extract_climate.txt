@@ -1,0 +1,46 @@
+
+var location = ee.FeatureCollection('projects/cru-xuxuebin/assets/data_coordinate')
+var date = ee.FeatureCollection('projects/cru-xuxuebin/assets/data_cord_date')
+//var era5 = ee.ImageCollection("ECMWF/ERA5/MONTHLY")
+var era5 = ee.ImageCollection("ECMWF/ERA5_LAND/MONTHLY")
+
+var list = ee.List([])
+
+var datalist = date.toList(1825)
+print(datalist)
+print(location)
+
+print(date_planting)
+
+
+for (var index = 0; index<=1824; index++){
+  print(index)
+  //print(datalist)
+  var data = ee.Feature(datalist.get(index))
+  //print(data)
+  var date_planting = data.get('Date_planting')
+  var date_haverting = data.get('Date_harveting')
+  //print(date_planting)
+  
+  var era5_select = era5.filterDate(date_planting, date_haverting).mean();
+  var pts = location.filterMetadata('No', 'equals', index+1);
+  
+  var era5_extract = era5_select.sampleRegions({
+    collection:pts,
+    //properties:ee.List(['No']), //默认输入的全选 
+    scale:1
+  });
+  list = list.add(era5_extract) //将每个提取出来的FeatureCollection附加到list
+  //print(era5_extract)
+}
+
+var result = ee.FeatureCollection(list).flatten() //将list转化为FeatureCollection，然后flatten
+
+print(result)
+
+Export.table.toDrive({
+  collection: result,
+  folder:'climate',
+  description: 'climate',
+  fileFormat: 'CSV'
+}); 

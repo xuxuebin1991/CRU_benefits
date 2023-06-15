@@ -1,0 +1,53 @@
+var table:Table projects/cru-xuxuebin/assets/maize_calendar
+var table2:Table projects/cru-xuxuebin/assets/maize_calendar_others
+var era5 = ee.ImageCollection("ECMWF/ERA5_LAND/MONTHLY")
+
+var list = ee.List([])
+var imagecollection = ee.List([])
+var datalist = table.toList(792)
+
+for (var index = 0; index<=791; index++){
+  var region = ee.Feature(datalist.get(index))
+  var i = region.get('plant')
+  var j = region.get('harvest')
+  
+  var era5_2017 = ee.Algorithms.If(j-i >= 0, era5.filterDate(ee.Date.fromYMD( 2017, i, 1 ), ee.Date.fromYMD( 2017, j, 28 )).mean(), era5.filterDate(ee.Date.fromYMD( 2016, i, 1 ), ee.Date.fromYMD( 2017, j, 28 )).mean())
+  var era5_2018 = ee.Algorithms.If(j-i >= 0, era5.filterDate(ee.Date.fromYMD( 2018, i, 1 ), ee.Date.fromYMD( 2018, j, 28 )).mean(), era5.filterDate(ee.Date.fromYMD( 2017, i, 1 ), ee.Date.fromYMD( 2018, j, 28 )).mean())  
+  var era5_2019 = ee.Algorithms.If(j-i >= 0, era5.filterDate(ee.Date.fromYMD( 2019, i, 1 ), ee.Date.fromYMD( 2019, j, 28 )).mean(), era5.filterDate(ee.Date.fromYMD( 2018, i, 1 ), ee.Date.fromYMD( 2019, j, 28 )).mean())
+  var era5_2020 = ee.Algorithms.If(j-i >= 0, era5.filterDate(ee.Date.fromYMD( 2020, i, 1 ), ee.Date.fromYMD( 2020, j, 28 )).mean(), era5.filterDate(ee.Date.fromYMD( 2019, i, 1 ), ee.Date.fromYMD( 2020, j, 28 )).mean())
+  var era5_2021 = ee.Algorithms.If(j-i >= 0, era5.filterDate(ee.Date.fromYMD( 2021, i, 1 ), ee.Date.fromYMD( 2021, j, 28 )).mean(), era5.filterDate(ee.Date.fromYMD( 2020, i, 1 ), ee.Date.fromYMD( 2021, j, 28 )).mean())
+  
+  var imagelist = ee.List([era5_2017, era5_2018, era5_2019, era5_2020, era5_2021])
+  
+  var era5_total = ee.ImageCollection.fromImages(imagelist).mean().clip(region)
+  
+  imagecollection = imagecollection.add(era5_total)
+}
+
+//other areas maize plant at May and harvest at Sept.
+var era5_2017 = era5.filterDate(ee.Date.fromYMD( 2017, 5, 1 ), ee.Date.fromYMD( 2017, 9, 28 )).mean()
+var era5_2018 = era5.filterDate(ee.Date.fromYMD( 2018, 5, 1 ), ee.Date.fromYMD( 2018, 9, 28 )).mean()
+var era5_2019 = era5.filterDate(ee.Date.fromYMD( 2019, 5, 1 ), ee.Date.fromYMD( 2019, 9, 28 )).mean()
+var era5_2020 = era5.filterDate(ee.Date.fromYMD( 2020, 5, 1 ), ee.Date.fromYMD( 2020, 9, 28 )).mean()
+var era5_2021 = era5.filterDate(ee.Date.fromYMD( 2021, 5, 1 ), ee.Date.fromYMD( 2021, 9, 28 )).mean()
+var imagelist = ee.List([era5_2017, era5_2018, era5_2019, era5_2020, era5_2021])
+var era5_total = ee.ImageCollection.fromImages(imagelist).mean().clip(table2)
+imagecollection = imagecollection.add(era5_total)
+
+
+imagecollection = ee.ImageCollection(imagecollection)
+
+var image = imagecollection.mosaic()
+
+//Map.addLayer(image)
+
+//print(image)
+
+Export.image.toDrive({
+  image: image,
+  description: 'era5_maize',
+  crs: "EPSG:4326",
+  scale:9625, 
+  maxPixels: 1e13,
+  folder: 'era5_maize'
+});
